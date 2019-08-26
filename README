@@ -1,0 +1,39 @@
+                   tt - Testing Tool                                                       .       
+                                                  .*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%.. 
+                                                  *(%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####(((##(%, 
+tt is not a Russian semi-automatic                .&&&&&&&&&%#%%%%%%%%%#%%%%%%%%%%%%%%(####((##(%%.
+famous "killer pistol".                            %%%%%%%%%%%%%%%%%%%%%%%%#%%%&&&&&&%%%%%%#%%%%%#*
+                                                   .  .   ..  .,,,...,%#%#****&&%%%%#%%%%%((%%%#/. 
+                                                                       ( .   .#%%#%%(/#/(#(%&%#    
+                                                                       ..     #%%/(%%#%&%&&%.    
+                                                                        .(*,,,,##%#%&&&%%%%&&&,    
+tt is not any from                                                       ..... . .%#%%%%%%&%.   
+https://www.abbreviations.com/TT                                                 .#&&&(#%#&%%    
+                                                                                   .(/%%&%&%&&%(.  
+                                                                                    .#%&%&&&&&%%   
+                                                                                     ##&&&&%&(/. 
+                                                                                     .#&&%%&#*%. 
+                                                                                      %&&&&&&&&%.                                                                                     
+                                                                                      
+
+ tt is a utility written to measure the running time of an application. One of the main aim is to
+launch the application serially selected number times. For each run, it is possible to save a separate
+execution time. For the entire series the maximum and minimum time, average time, variance and standard
+deviation are calculated.
+To calculate the mean and variance, to avoid overflow, the algorithms of the moving average and Welford
+variance are used.
+In fact, tt allows to make a mini statistical experiment.
+Time is measured using 7 standard functions: clock_gettime, time, clock, gettimeofday, timespec_get,
+times, getrusage. Thus, on the other hand, the tt utility can be viewed as observation and comparison
+the behavior of the listed functions for the selected application.
+If _POSIX_TIMERS is defined, then for clock_gettime function, the utility selects CLOCK with
+lowest available resolution.
+To launch the application, there is a choice between the fork/exec and posix_spawn mechanisms.
+It is possible to save intermediate results either in the utility stack and in the heap, for this utility
+must be compiled with different keys.
+There is an opportunity to hide the output of the application itself and to hide individual execution times. 
+It is also possible not to save intermediate results.
+There is a possibility to write to the file.
+For greater accuracy, it is possible to specify a sleeping time between individual launches.
+tt can show resolution for some clocks and size limits for some types.
+Handled stack and heap overflow: SIGBUS, SIGSEGV signals.

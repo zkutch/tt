@@ -1,0 +1,13 @@
+================================================================================
+  Installing tt
+================================================================================
+
+tt follows standard Unix conventions and should be easily installed on
+most systems.
+
+If building from a packaged release:
+
+  $ ./configure
+  $ make
+  $ make install
+

@@ -1,0 +1,120 @@
+.TH tt   "12 August 2019"
+.SH tt
+tt \- measures the running time of the selected 
+.B application 
+.SH DESCRIPTION
+.B tt
+runs chosen 
+.B application,
+with absolute
+.I path
+, serially,
+.I amount
+times. For each run, it is possible to save a separate
+execution time. For the entire series the maximum and minimum time, average time, variance and standard
+deviation are calculated. Time is measured using 7 standard functions: clock_gettime, time, clock, gettimeofday, timespec_get,
+times, getrusage. If defined _POSIX_TIMERS, then 
+.B tt
+for clock_gettime function selects CLOCK with
+lowest available resolution in first place.
+.SH SYNOPSIS
+.SY \fBtt\fP
+.OP \-arqgtomspHfM
+.OP \-S \fIseconds\fP
+.OP \-b \fIpath\fP
+.OP \-c \fIamount\fP
+.SY \fBtt\fP
+.OP \-R
+.OP \-d
+.OP \-V
+.OP \-h
+.YS 
+.SS Options
+.TP
+\fB-a\fP
+for second clock_gettime selects CLOCK_PROCESS_CPUTIME_ID. 
+.TP
+\fB-r\fP
+includes function getrusage.
+.TP
+\fB-q\fP
+quiet - hides standard output for
+.B application.
+.TP
+\fB-g\fP
+includes function gettimeofday.
+.TP
+\fB-t\fP
+includes function times.
+.TP
+\fB-o\fP
+includes function clock.
+.TP
+\fB-m\fP
+includes function time.
+.TP
+\fB-s\fP
+includes function timespec_get.
+.TP
+\fB-p\fP
+force posix_spawn to run \fBapplication\fP, by default is used fork/exec.
+.TP
+\fB-H\fP
+hide intermediate results for each, 
+.B application
+run, implies \-M.
+.TP
+\fB-f\fP
+prints to file \(lqtt_results.txt\(rq in current directory.
+.TP
+\fB-M\fP
+not keep intermediate results.
+.TP
+\fB-S\fP \fIseconds\fP
+sleep \fIseconds\fP between each iteration.
+.TP
+\fB-b \fIpath\fP
+absolute
+.I path
+for
+.B application.
+.TP
+\fB-c \fIamount\fR
+run 
+.B application
+\fIamount\fR times.
+.TP
+\fB-R\fP
+show resolution for some clocks.
+.TP
+\fB-d\fP
+show size limits for some types.
+.TP
+\fB-V\fP
+Version.
+.TP
+\fB-h\fP
+help.
+.SH OTHER
+It is possible to save intermediate results either in the 
+.B tt
+stack or in the heap. By default 
+.B tt
+use stack. For heap, before compiling, it should be configured with option --enable-MEMORY.
+.SH AUTHOR/REPORTING BUGS
+zkutch@yahoo.com
+.SH COPYRIGHT
+MIT License
+.SH EXAMPLES
+\fC\fR
+.SS tt  -b /usr/bin/find -c 30 -q -a -S 1 -m -t -g -r -s -o
+\FP
+.br
+.br
+runs
+.B application
+find in current directory 30 times, hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 1 second between each run.
+.SH "SEE ALSO"
+time(1)
+.SH BUGS
+Yet none known.
