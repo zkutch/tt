@@ -1,0 +1,126 @@
+\input texinfo
+@setfilename tt.info
+@settitle TT (Testing Tool) Manual
+
+@set VERSION 2.1
+@set UPDATED 14 March 2020
+
+@copying
+Copyright @copyright{} 2019-20 @email{zkutch@@yahoo.com}.
+@ifinfo
+Texinfo file
+@end ifinfo
+Version 1.0.
+@end copying
+
+@documentencoding UTF-8
+
+@ifnottex
+@node Top
+@top Testing Tool (tt)
+tt - measures the running time of the selected @strong{application}.
+
+@noindent (Version @value{VERSION}, @value{UPDATED}).
+@end ifnottex
+
+@menu
+* 1.: Description.
+* 2.: Synopsis.
+* 3.: Options.
+* 4.: Other.
+* 5.: Examples.
+* 6.: Copyright.
+
+@c* Index:: Complete index.
+
+
+@end menu
+
+
+@node Description 
+DESCRIPTION
+
+@noindent Main aim of @strong{tt} is to run chosen @strong{application} serially, several times and measure running time. For this @strong{application} is given by absolute @emph{path} using option '-b' and @emph{amount} of repeatings is given by option '-c'.
+ For each run, it is possible to save a separate execution time. For the entire series the maximum and minimum time, average time, variance and standard deviation are calculated. Time is measured using 7 standard functions: clock_gettime, time, clock, gettimeofday, timespec_get, times, getrusage. If defined _POSIX_TIMERS, then tt for clock_gettime function selects CLOCK with lowest available resolution in first place.
+        
+@node Synopsis
+SYNOPSIS
+
+@indent tt [-arqgtomspHfM] [-S seconds] [-b path [@@ application options @@] ] [-c amount]
+
+tt [-R] [-d ] [-R] [-V ] [-h]
+
+@node Options
+
+OPTIONS
+
+@indent @option{-a}      for second clock_gettime selects CLOCK_PROCESS_CPUTIME_ID.
+
+@option{-r}      includes function getrusage.
+
+@option{-q}      quiet - hides standard output for application.
+
+@option{-g}      includes function gettimeofday.
+
+@option{-t}      includes function times.
+
+@option{-o}      includes function clock.
+
+@option{-m}      includes function time.
+
+@option{-s}      includes function timespec_get.
+
+@option{-p}      force posix_spawn to run application, by default is used fork/exec.
+
+@option{-H}      hide intermediate results for each, application run, implies -M.                              
+                                                                                                              
+@option{-f}      prints to file “tt_results.txt” in current directory.                                 
+                                                                                                              
+@option{-M}      not keep intermediate results                                                                 
+                                                                                                              
+@option{-S} seconds                                                                                            
+        sleep seconds between each iteration.                                                         
+                                                                                                              
+@option{-b} path                                                                                               
+        absolute path for @strong{application}. 
+        It is possible to specify command line options also for the @strong{application} using OPTS_DELIMITER parameter. By default it is '@@', but can be changed to any other desirable symbol during configuration.
+                                                                                                              
+@option{-c} amount                                                                                             
+        run @strong{application} amount times.                                                                 
+                                                                                                              
+@option{-R}      show resolution for some clocks.                                                              
+
+@option{-d}      show size limits for some types.
+
+@option{-V}      Version.
+
+@option{-h}      help.
+
+
+
+@node Other
+
+OTHER
+
+@noindent It is possible to save intermediate results either in the tt stack or in the heap. By default tt use stack. For heap, before compiling, it should be configured with option --enable-MEMORY.
+
+@node Examples
+
+EXAMPLES
+
+tt -b /usr/bin/find -c 30 -q -a -S 1 -m -t -g -r -s -o
+
+@noindent runs @strong{application} find  in  current directory 30 times, hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functionsfor measuring time. Sleep 1 second between each run.
+
+tt  -b /bin/ls @@-l -h@@ -c 100 -q -a -S 2 -m -t -g -r -s -o
+
+@noindent runs @strong{application} ls in current directory 100 times with options "-l -h", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 2 seconds between each run.
+
+@node Copyright
+
+COPYRIGHT
+
+@noindent
+@insertcopying
+
+@bye

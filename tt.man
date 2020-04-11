@@ -3,14 +3,17 @@
 tt \- measures the running time of the selected 
 .B application 
 .SH DESCRIPTION
+Main aim of
 .B tt
-runs chosen 
-.B application,
-with absolute
+is to run chosen 
+.B application 
+serially, several times and measure running time. For this
+.B application 
+is given by absolute
 .I path
-, serially,
+using option '-b' and  
 .I amount
-times. For each run, it is possible to save a separate
+of repeatings is given by option '-c'. For each run, it is possible to save a separate
 execution time. For the entire series the maximum and minimum time, average time, variance and standard
 deviation are calculated. Time is measured using 7 standard functions: clock_gettime, time, clock, gettimeofday, timespec_get,
 times, getrusage. If defined _POSIX_TIMERS, then 
@@ -21,7 +24,7 @@ lowest available resolution in first place.
 .SY \fBtt\fP
 .OP \-arqgtomspHfM
 .OP \-S \fIseconds\fP
-.OP \-b \fIpath\fP
+.OP \-b \fIpath\fP  [@application options@] 
 .OP \-c \fIamount\fP
 .SY \fBtt\fP
 .OP \-R
@@ -77,7 +80,10 @@ sleep \fIseconds\fP between each iteration.
 absolute
 .I path
 for
-.B application.
+.B application. 
+It is possible to specify command line options also for the 
+.B application 
+using OPTS_DELIMITER parameter. By default it is '@', but can be changed to any other desirable symbol during configuration.
 .TP
 \fB-c \fIamount\fR
 run 
@@ -110,10 +116,16 @@ MIT License
 .SS tt  -b /usr/bin/find -c 30 -q -a -S 1 -m -t -g -r -s -o
 \FP
 .br
-.br
 runs
 .B application
 find in current directory 30 times, hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 1 second between each run.
+\fC\fR
+.SS tt  -b /bin/ls @-l -h@ -c 100 -q -a -S 2 -m -t -g -r -s -o
+\FP
+.br
+runs
+.B application
+ls in current directory 100 times with options "-l -h", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 2 seconds between each run.
 .SH "SEE ALSO"
 time(1)
 .SH BUGS

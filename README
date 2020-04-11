@@ -19,7 +19,7 @@ https://www.abbreviations.com/TT                                                
  tt is a utility written to measure the running time of an application. One of the main aim is to
 launch the application serially selected number times. For each run, it is possible to save a separate
 execution time. For the entire series the maximum and minimum time, average time, variance and standard
-deviation are calculated.
+deviation are calculated. It is possible to specify command line options also for the application  using OPTS_DELIMITER parameter. By default it is '@', but can be changed to any other desirable symbol during configuration.
 To calculate the mean and variance, to avoid overflow, the algorithms of the moving average and Welford
 variance are used.
 In fact, tt allows to make a mini statistical experiment.

@@ -1,0 +1,150 @@
+This is tt.info, produced by makeinfo version 6.3 from tt.texi.
+
+Copyright © 2019-20 <zkutch@yahoo.com>.  Texinfo file Version 1.0.
+
+
+File: tt.info,  Node: Top,  Next: Description,  Up: (dir)
+
+Testing Tool (tt)
+*****************
+
+tt - measures the running time of the selected *application*.
+
+(Version 2.1, 14 March 2020).
+
+* Menu:
+
+* 1.: Description.
+* 2.: Synopsis.
+* 3.: Options.
+* 4.: Other.
+* 5.: Examples.
+* 6.: Copyright.
+
+
+
+
+File: tt.info,  Node: Description,  Next: Synopsis,  Prev: Top,  Up: Top
+
+DESCRIPTION
+
+Main aim of *tt* is to run chosen *application* serially, several times
+and measure running time.  For this *application* is given by absolute
+_path_ using option ’-b’ and _amount_ of repeatings is given by option
+’-c’.  For each run, it is possible to save a separate execution time.
+For the entire series the maximum and minimum time, average time,
+variance and standard deviation are calculated.  Time is measured using
+7 standard functions: clock_gettime, time, clock, gettimeofday,
+timespec_get, times, getrusage.  If defined _POSIX_TIMERS, then tt for
+clock_gettime function selects CLOCK with lowest available resolution in
+first place.
+
+
+File: tt.info,  Node: Synopsis,  Next: Options,  Prev: Description,  Up: Top
+
+SYNOPSIS
+
+   tt [-arqgtomspHfM] [-S seconds] [-b path [@ application options @] ]
+[-c amount]
+
+   tt [-R] [-d ] [-R] [-V ] [-h]
+
+
+File: tt.info,  Node: Options,  Next: Other,  Prev: Synopsis,  Up: Top
+
+OPTIONS
+
+   ‘-a’ for second clock_gettime selects CLOCK_PROCESS_CPUTIME_ID.
+
+   ‘-r’ includes function getrusage.
+
+   ‘-q’ quiet - hides standard output for application.
+
+   ‘-g’ includes function gettimeofday.
+
+   ‘-t’ includes function times.
+
+   ‘-o’ includes function clock.
+
+   ‘-m’ includes function time.
+
+   ‘-s’ includes function timespec_get.
+
+   ‘-p’ force posix_spawn to run application, by default is used
+fork/exec.
+
+   ‘-H’ hide intermediate results for each, application run, implies -M.
+
+   ‘-f’ prints to file “tt_results.txt” in current directory.
+
+   ‘-M’ not keep intermediate results
+
+   ‘-S’ seconds sleep seconds between each iteration.
+
+   ‘-b’ path absolute path for *application*.  It is possible to specify
+command line options also for the *application* using OPTS_DELIMITER
+parameter.  By default it is ’@’, but can be changed to any other
+desirable symbol during configuration.
+
+   ‘-c’ amount run *application* amount times.
+
+   ‘-R’ show resolution for some clocks.
+
+   ‘-d’ show size limits for some types.
+
+   ‘-V’ Version.
+
+   ‘-h’ help.
+
+
+File: tt.info,  Node: Other,  Next: Examples,  Prev: Options,  Up: Top
+
+OTHER
+
+It is possible to save intermediate results either in the tt stack or in
+the heap.  By default tt use stack.  For heap, before compiling, it
+should be configured with option –enable-MEMORY.
+
+
+File: tt.info,  Node: Examples,  Next: Copyright,  Prev: Other,  Up: Top
+
+EXAMPLES
+
+   tt -b /usr/bin/find -c 30 -q -a -S 1 -m -t -g -r -s -o
+
+runs *application* find in current directory 30 times, hide standard
+output for it, use second clock_gettime, time, times, gettimeofday,
+getrusage, timespec_get and clock functionsfor measuring time.  Sleep 1
+second between each run.
+
+   tt -b /bin/ls @-l -h@ -c 100 -q -a -S 2 -m -t -g -r -s -o
+
+runs *application* ls in current directory 100 times with options "-l
+-h", hide standard output for it, use second clock_gettime, time, times,
+gettimeofday, getrusage, timespec_get and clock functions for measuring
+time.  Sleep 2 seconds between each run.
+
+
+File: tt.info,  Node: Copyright,  Prev: Examples,  Up: Top
+
+COPYRIGHT
+
+   Copyright © 2019-20 <zkutch@yahoo.com>.  Texinfo file Version 1.0.
+
+
+
+Tag Table:
+Node: Top134
+Node: Description434
+Node: Synopsis1176
+Node: Options1385
+Node: Other2618
+Node: Examples2892
+Node: Copyright3591
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

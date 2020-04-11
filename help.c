@@ -33,10 +33,10 @@ void help(void)
     printf(bold "tt\n" reset);    
     string_2_column(width, "tt - measures the running time of the selected " bold "application" reset ".");
     printf(bold "\nDESCRIPTION\n" reset);    
-    string_2_column(width, bold "tt" reset " runs chosen " bold "application" reset " with absolute " underline "path" reset ", serially, " underline "amount" reset " times. For each run, it is possible to save a separate execution time. For the entire series the maximum and minimum time, average time, variance and standard deviation are calculated. Time is measured using 7 standard functions: clock_gettime, time, clock, gettimeofday, timespec_get, times, getrusage. If defined _POSIX_TIMERS, then " bold "tt" reset " for clock_gettime function selects CLOCK with lowest available resolution in first place.");
+    string_2_column(width, "Main aim of " bold "tt" reset " is to run chosen " bold "application" reset " serially, several times and measure running time.  For this " bold "application" reset " is given by absolute " underline "path" reset " using option ’-b’ and " underline "amount" reset " of repeatings is given by option ’-c’. For each run, it is possible to save a separate execution time. For the entire series the maximum and minimum time, average time, variance and standard deviation are calculated. Time is measured using 7 standard functions: clock_gettime, time, clock, gettimeofday, timespec_get, times, getrusage. If defined _POSIX_TIMERS, then " bold "tt" reset " for clock_gettime function selects CLOCK with lowest available resolution in first place.");
     
     printf(bold "\nSYNOPSIS\n" reset);
-    string_2_column(width, bold "tt " reset "[" bold "-arqgtomspHfM" reset "] [" bold "-S " reset underline "seconds" reset  "] [" bold "-b " reset  underline "path" reset  "] ["  bold "-c " reset  underline "amount" reset "]");
+    string_2_column(width, bold "tt " reset "[" bold "-arqgtomspHfM" reset "] [" bold "-S " reset underline "seconds" reset  "] [" bold "-b " reset  underline "path" reset  " [@" bold "application" reset " options@]] ["  bold "-c " reset  underline "amount" reset "]");
     printf( bold "\ttt " reset "[" bold "-R" reset "] [" bold "-d " reset "] [" bold "-R" reset "] [" bold "-V " reset "] [" bold "-h" reset "]\n");
     
     printf(bold "\nOPTIONS\n" reset);
@@ -54,8 +54,10 @@ void help(void)
     string_2_column(width,bold "-M" reset "\tnot keep intermediate results\n");
     string_2_column(width,bold "-S " reset underline "seconds"reset);
     string_2_column(width,"\tsleep " underline "seconds" reset " between each iteration.\n");
-    string_2_column(width,bold "-b " reset underline "path"reset);
+    string_2_column(width,bold "-b " reset underline "path"reset "\n");
     string_2_column(width,"\tabsolute " underline "path" reset " for " bold "application.\n" reset);
+    string_2_column(width, "It is possible to specify command line options also for the "
+        bold "application" reset " using OPTS_DELIMITER parameter. By default it is ’@’, but can be changed to any other desirable symbol during configuration.\n");
     string_2_column(width,bold "-c " reset underline "amount"reset);
     string_2_column(width,"\trun " bold "application " reset underline "amount"reset " times.\n");
     string_2_column(width,bold "-R" reset "\tshow resolution for some clocks.\n");
@@ -74,7 +76,10 @@ void help(void)
     
     printf(bold "EXAMPLES\n" reset);
     string_2_column(width,bold "tt -b /usr/bin/find -c 30 -q -a -S 1 -m -t -g -r -s -o\n" reset);
-    string_2_column(width, "runs " bold "application" reset " find  in  current directory 30 times, hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 1 second between each run.");
+    string_2_column(width, "runs " bold "application" reset " find  in  current directory 30 times, hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 1 second between each run.\n");
+    
+    string_2_column(width,bold "tt -b /bin/ls @-l -h@ -c 100 -q -a -S 2 -m -t -g -r -s -o\n" reset);
+    string_2_column(width, "runs " bold "application" reset " ls in current directory 100 times with options \"-l -h\", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time.  Sleep 2 seconds between each run.");
     
     printf(bold "\nSEE ALSO\n" reset);
     printf("\ttime(1)\n"); 

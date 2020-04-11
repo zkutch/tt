@@ -9,6 +9,18 @@
 #define MEMORY 0
 #endif
 
+#ifndef OPTS_DELIMITER   // delimiter for executable application options
+#define OPTS_DELIMITER '@'
+#endif
+
+#ifndef EXECUTABLE_OPT_MAX_SIZE
+#define EXECUTABLE_OPT_MAX_SIZE 1000
+#endif
+
+#ifndef MAX_OPTS
+#define MAX_OPTS 100
+#endif
+
 #include <stdlib.h>	// atoi, system(), malloc
 #include <spawn.h>	// spawn
 #include <sys/wait.h>	// waitpid
@@ -16,14 +28,16 @@
 #include </usr/include/stdint.h>
 #include "tt.h"
 #include <fcntl.h>  //  O_RDONLY, O_WRONLY, O_CLOEXEC
+#include "translation.h"
 #define RED  "\x1B[31m"
 #define RESET "\x1B[0m"
 #define MAG   "\x1B[35m"
 #define CYN   "\x1B[36m"
 #define BLU   "\x1B[34m"
 
-
-#define Version 1.0
+#ifndef Version
+#define Version 2.1
+#endif
 
 struct timespec timespec_diff(struct timespec start, struct timespec end);
 struct timeval timeval_diff(struct timeval t1, struct timeval t2);
@@ -104,25 +118,30 @@ int main(int argc, char **argv)
         _exit(62);
     }     
 
-          
+    i18n(); // internationalization 
+     
 // for measuring whole time          
     struct timeval t01, t02;
     struct tm * tm1, *tm2;    
 	
     if (gettimeofday( &t01, NULL ) == -1)
     {
-        printf("Detect gettimeofday error: %s", strerror(errno));
+        printf(_("Detect gettimeofday error: %s"), strerror(errno));
         return 17;
     }
     if(!(tm1 = localtime ( &t01.tv_sec )))
     {
-        printf("Detect localtime error: %s", strerror(errno));
+        printf(_("Detect localtime error: %s"), strerror(errno));
         return 18;
     }
-    
-    printf("\nStart working %d:%02d:%02d:%ld.\n\n", tm1->tm_hour, tm1->tm_min, tm1->tm_sec, t01.tv_usec);
+    puts("");
+    printf(_("Start working"));
+    printf(" %d:%02d:%02d:%ld.", tm1->tm_hour, tm1->tm_min, tm1->tm_sec, t01.tv_usec);
+    puts("\n");
     size_t i =0;
     
+    char *argv1[MAX_OPTS]; 
+    char * executable;
     
     _Bool w = 1; // key for lunch work works only '-R' or '-d' options
 // start command line arguments  
@@ -147,7 +166,7 @@ int main(int argc, char **argv)
     _Bool h = 0; // help
     _Bool V = 0; // Version
     struct stat sb;
-    char * executable;
+    
     char * circles_char;
     char * sleep_char;
     while (--argc > 0 )
@@ -160,7 +179,7 @@ int main(int argc, char **argv)
                 case 'c':   // number of cycles
                     if(*++argv == 0x0)
                     {
-                        printf("After option \"-c\" should be integer.\n\n");
+                        printf(_("After option \"-c\" should be integer.\n\n"));
                         return 23;
                     }
                     circles_char = malloc( strlen((char *)*argv)  * sizeof(char)+1 );
@@ -172,20 +191,20 @@ int main(int argc, char **argv)
                     strcpy(circles_char, *argv);                    
                     if(check_if_number(circles_char))
                     {
-                        printf("After option \"-c\" should be integer, number of cycles.\n\n");
+                        printf(_("After option \"-c\" should be integer, number of cycles.\n\n"));
                         free(circles_char);
                         return 11;
                     }
                     circles = atoi(circles_char);
                     free(circles_char);
                     // TODO check if circles is not overflow
-                    printf("Given %lu amount of cycles.\n", circles);
+                    printf(_("Given %lu amount of cycles.\n"), circles);
                     --argc;
                     break;
                 case 'b':   // path to executable
                     if(*++argv == 0x0)
                     {
-                        printf("After option \"-b\" should be executable.\n\n");
+                        printf(_("After option \"-b\" should be executable.\n\n"));
                         return 24;
                     }
                     executable = malloc(strlen((char *)*argv)  * sizeof(char) + 1);
@@ -199,24 +218,111 @@ int main(int argc, char **argv)
                     if(!stat(executable, &sb))
                     {
                         if(S_ISREG(sb.st_mode) && sb.st_mode & 0111)
-                            printf("Given %s is executable.\n", executable);
+                            printf(_("Given %s is executable.\n"), executable);
                         else
                         {
-                            printf("Given %s is not executable.\n", executable);
+                            printf(_("Given %s is not executable.\n"), executable);
                             return 16;
                         }
                     }
                     else
                     {
-                        printf("Problems with stat %s. Error: %s\n", executable, strerror(errno));
+                        printf(_("Problems with stat %s. Error: %s\n"), executable, strerror(errno));
                         return 17;
                     }
+                    argv1[0] = executable;
+                    short ind1=1;
+                    short found_delimiter = 0;
+                    char ** quota = argv;
+                    if(*++quota != 0x0)
+                    {
+                    if(**(quota) == OPTS_DELIMITER)
+                    {
+                        short maxlen = 0;
+                        found_delimiter = 1;                        
+                        quota = ++argv;
+                        --argc;
+                        if(strlen(*argv) == 1)  // for case when after OPTS_DELIMITER is space(s)
+                        {
+                            ind1 = 0;
+                        }
+                        else
+                        {
+                            argv1[ind1] = *quota;
+                            
+                            short jj=0;
+                            for(jj=0; jj<strlen(*quota)-1; jj++)       //  eliminate starting OPTS_DELIMITER in first option                 
+                                argv1[ind1][jj] = argv1[ind1][jj+1];                        
+                            argv1[ind1][jj] = '\0';                           
+                            
+                            maxlen = strlen(*quota);
+                            
+                            if(quota[0][strlen(*quota)-1] == OPTS_DELIMITER)
+                            {                                
+                                found_delimiter = 2;
+                                quota[0][strlen(*quota)-1] = '\0'; // eliminate finishing OPTS_DELIMITER in last option
+                                argv1[ind1] = *quota;
+                                ++ind1;
+                                goto EXE;
+                            } 
+                        }
+                        
+                        while(ind1 < MAX_OPTS && maxlen < EXECUTABLE_OPT_MAX_SIZE && argc > 0)
+                        {
+                            ++quota;
+                            ind1++;
+                            --argc;
+                            ++argv;
+                            if(*argv == 0x0)
+                                break;
+                            if(quota[0][strlen(*quota)-1] == OPTS_DELIMITER)
+                            {                                
+                                quota[0][strlen(*quota)-1] = '\0'; // eliminate finishing OPTS_DELIMITER in last option
+                                if(strlen(*quota) > 1)
+                                {
+                                    argv1[ind1] = *quota;
+                                    ind1++;
+                                }
+                                found_delimiter = 2;
+                                break;
+                            } 
+                            maxlen += strlen(*quota);
+                            argv1[ind1] = *quota;
+                            
+                        }
+                        if(maxlen >= EXECUTABLE_OPT_MAX_SIZE)
+                        {
+                            printf(_("Error in EXECUTABLE_OPT_MAX_SIZE.\n"));
+                            return 76;
+                        }
+                        else if(ind1 >=  MAX_OPTS)
+                        {
+                            printf(_("Error in MAX_OPTS.\n"));
+                            return 77;
+                        }
+                                            
+                    }
+                    }
+EXE:                if(found_delimiter == 1)
+                    {
+                        printf(_("Not found closing executable options delimiter.\n"));
+                        return 78;                        
+                    }
+                    argv1[ind1] = NULL;
+                    
+                    if(ind1>1)
+                    {
+                        printf(_("Executable line: "));
+                        for(short int jj = 0; jj < ind1; jj++)
+                        printf(_("%s "), argv1[jj]);
+                        puts("");
+                    }  
                     --argc;
                     break;
                 case 'd':
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-d\" should consist from one letter.\n");
+                        printf(_("Option \"-d\" should consist from one letter.\n"));
                         return 25;
                     }
                     d = 1;
@@ -224,7 +330,7 @@ int main(int argc, char **argv)
                 case 'R':   // resolution
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-R\" should consist from one letter.\n");
+                        printf(_("Option \"-R\" should consist from one letter.\n"));
                         return 26;
                     }
                     R = 1;
@@ -232,7 +338,7 @@ int main(int argc, char **argv)
                 case 'r':   // getrusage
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-r\" should consist from one letter.\n");
+                        printf(_("Option \"-r\" should consist from one letter.\n"));
                         return 27;
                     }
                     r = 1;
@@ -240,7 +346,7 @@ int main(int argc, char **argv)
                 case 'q':   // quiet
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-q\" should consist from one letter.\n");
+                        printf(_("Option \"-q\" should consist from one letter.\n"));
                         return 28;
                     }
                     q = 1;
@@ -248,7 +354,7 @@ int main(int argc, char **argv)
                 case 'g':   // gettimeofday
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-g\" should consist from one letter.\n");
+                        printf(_("Option \"-g\" should consist from one letter.\n"));
                         return 29;
                     }
                     g = 1;
@@ -256,7 +362,7 @@ int main(int argc, char **argv)
                 case 't':   // times
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-t\" should consist from one letter.\n");
+                        printf(_("Option \"-t\" should consist from one letter.\n"));
                         return 33;
                     }
                     t = 1;
@@ -264,7 +370,7 @@ int main(int argc, char **argv)
                 case 'o':   // clock
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-o\" should consist from one letter.\n");
+                        printf(_("Option \"-o\" should consist from one letter.\n"));
                         return 30;
                     }
                     o = 1;
@@ -272,7 +378,7 @@ int main(int argc, char **argv)
                 case 'm':   // time
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-m\" should consist from one letter.\n");
+                        printf(_("Option \"-m\" should consist from one letter.\n"));
                         return 36;
                     }
                     m = 1;
@@ -280,7 +386,7 @@ int main(int argc, char **argv)
                 case 's':   // timespec_get
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-s\" should consist from one letter.\n");
+                        printf(_("Option \"-s\" should consist from one letter.\n"));
                         return 41;
                     }
                     s = 1;
@@ -288,7 +394,7 @@ int main(int argc, char **argv)
                 case 'a':   // timespec_get
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-a\" should consist from one letter.\n");
+                        printf(_("Option \"-a\" should consist from one letter.\n"));
                         return 42;
                     }
                     a = 1;
@@ -296,7 +402,7 @@ int main(int argc, char **argv)
                 case 'p':   // posix_spawn
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-p\" should consist from one letter.\n");
+                        printf(_("Option \"-p\" should consist from one letter.\n"));
                         return 45;
                     }
                     p = 1;
@@ -304,7 +410,7 @@ int main(int argc, char **argv)
                 case 'H':   // hide arrays
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-H\" should consist from one letter.\n");
+                        printf(_("Option \"-H\" should consist from one letter.\n"));
                         return 46;
                     }
                     H = 1;
@@ -312,15 +418,15 @@ int main(int argc, char **argv)
                 case 'f':   // hide arrays
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-f\" should consist from one letter.\n");
+                        printf(_("Option \"-f\" should consist from one letter.\n"));
                         return 47;
                     }
                     f = 1;
                     break;
-                case 'S':   // sleep between iterations: to do random sleep
+                case 'S':   // sleep between iterations: TODO random sleep
                     if(*++argv == 0x0)
                     {
-                        printf("After option \"-S\" should be integer.\n\n");
+                        printf(_("After option \"-S\" should be integer.\n\n"));
                         return 23;
                     }
                     sleep_char = malloc( strlen((char *)*argv)  * sizeof(char)+1 );
@@ -332,7 +438,7 @@ int main(int argc, char **argv)
                     strcpy(sleep_char, *argv);                    
                     if(check_if_number(sleep_char))
                     {
-                        printf("After option \"-S\" should be integer, number of sleep seconds.\n\n");
+                        printf(_("After option \"-S\" should be integer, number of sleep seconds.\n\n"));
                         free(sleep_char);
                         return 11;
                     }
@@ -340,13 +446,13 @@ int main(int argc, char **argv)
                     free(sleep_char);
                     S = 1;
                     // TODO check if sleep_sec is not overflow
-                    printf("Sleep time %lu sec.\n", sleep_sec);
+                    printf(_("Sleep time %lu sec.\n"), sleep_sec);
                     --argc;
                     break;
                     case 'M':   // hide arrays
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-M\" should consist from one letter.\n");
+                        printf(_("Option \"-M\" should consist from one letter.\n"));
                         return 51;
                     }
                     M = 1;
@@ -354,7 +460,7 @@ int main(int argc, char **argv)
                     case 'h':   // help
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-h\" should consist from one letter.\n");
+                        printf(_("Option \"-h\" should consist from one letter.\n"));
                         return 72;
                     }
                     h = 1;
@@ -362,13 +468,24 @@ int main(int argc, char **argv)
                     case 'V':   // Version
                     if(strlen(*argv) > 1)
                     {
-                        printf("Option \"-V\" should consist from one letter.\n");
+                        printf(_("Option \"-V\" should consist from one letter.\n"));
                         return 72;
                     }
                     V = 1;
                     break;
+                    case '-':   //long options
+                        if(strcmp(*argv, "-help") == 0)       // help                 
+                            h = 1;                        
+                        else if(strcmp(*argv, "-version") == 0)     // Version
+                            V = 1;                        
+                        else
+                        {
+                            printf(_("Found: unknown option %s\n"), *argv);
+                            return 79;
+                        }
+                        break;
                 default:
-                    printf("Found: illegal option %lu\n", c);
+                    printf(_("Found: illegal option %lu\n"), c);
                     return 12;                                       
                     break;
             }
@@ -385,7 +502,7 @@ int main(int argc, char **argv)
     }
     else if(V == 1)
     {        
-        printf("Version: %.2f\n", Version);    
+        printf(_("Version: %.2f\n"), Version);      
         if(segv_stack.ss_sp != NULL)
             free(segv_stack.ss_sp);
         return 74;
@@ -396,7 +513,7 @@ int main(int argc, char **argv)
         {
             if(d == 0 && R == 0)
             {          
-                puts("Nothing to do.\n");
+                puts(_("Nothing to do.\n"));
                 return 0;             
             }
             else
@@ -421,9 +538,9 @@ int main(int argc, char **argv)
  time_t start, end;
  
  pid_t pid;
- char *argv1[] = {"sh", "-c", executable, NULL};    
+     
 if(p)
-    printf("Forced posix_spawn.\n");
+    printf(_("Forced posix_spawn.\n"));
 
 // start getting system dimensions   
 if(d)
@@ -461,7 +578,7 @@ if(w)
     long tick_per_second = sysconf(_SC_CLK_TCK);
     if (tick_per_second == -1)
     {
-            printf("Detect sysconf error: %s\n", strerror(errno));
+            printf(_("Detect sysconf error: %s\n"), strerror(errno));
             return 40;
     }
     int status;    
@@ -481,58 +598,58 @@ if(w)
     clock_timesp = malloc(circles * sizeof(double));
     if(clock_timesp == NULL)
     {
-        printf("clock_timesp malloc error: %s\n", strerror(errno));
+        printf(_("clock_timesp malloc error: %s\n"), strerror(errno));
         return 55;
     }
     gettimeofday_timesp = malloc(circles * sizeof(struct timeval));
     if(gettimeofday_timesp == NULL)
     {
-        printf("gettimeofday_timesp malloc error: %s\n", strerror(errno));
+        printf(_("gettimeofday_timesp malloc error: %s\n"), strerror(errno));
         return 52;
     }
     clock_gettime_timesp = malloc(circles * sizeof(struct timespec));
     if(clock_gettime_timesp == NULL)
     {
-        printf("clock_gettime_timesp malloc error: %s\n", strerror(errno));
+        printf(_("clock_gettime_timesp malloc error: %s\n"), strerror(errno));
         return 53;    
     }
     clock_gettime_times1p = malloc(circles * sizeof(struct timespec));
     if(clock_gettime_times1p == NULL)
     {
-        printf("clock_gettime_times1p malloc error: %s\n", strerror(errno));
+        printf(_("clock_gettime_times1p malloc error: %s\n"), strerror(errno));
         return 54;    
     }
     timespec_get_timesp = malloc(circles * sizeof(struct timespec));
     if(timespec_get_timesp == NULL)
     {
-        printf("timespec_get_timesp malloc error: %s\n", strerror(errno));
+        printf(_("timespec_get_timesp malloc error: %s\n"), strerror(errno));
         return 59;    
     }
     getrusage_timesp = malloc(circles * sizeof(struct rusage));
     if(getrusage_timesp == NULL)
     {
-        printf("getrusage_timesp malloc error: %s\n", strerror(errno));
-        return 59;    
+        printf(_("getrusage_timesp malloc error: %s\n"), strerror(errno));
+        return 75;    
     }
     times_timesp = malloc(circles * sizeof(struct tms));
     if(times_timesp == NULL)
     {
-        printf("times_timesp malloc error: %s\n", strerror(errno));
+        printf(_("times_timesp malloc error: %s\n"), strerror(errno));
         return 60;    
     }
     times_real_timesp = malloc(circles * sizeof(clock_t));
     if(times_real_timesp == NULL)
     {
-        printf("times_real_timesp malloc error: %s\n", strerror(errno));
+        printf(_("times_real_timesp malloc error: %s\n"), strerror(errno));
         return 61;    
     }
     time_timesp = malloc(circles * sizeof(time_t));
     if(time_timesp == NULL)
     {
-        printf("time_timesp malloc error: %s\n", strerror(errno));
+        printf(_("time_timesp malloc error: %s\n"), strerror(errno));
         return 62;    
     }
-    printf("Working in heap.\n\n");     
+    printf(_("Working in heap.\n\n"));    
     #endif
     
     
@@ -608,7 +725,7 @@ if(w)
     P = 1;
     struct timespec resolution;
     struct timespec resolution1; 
-    printf("Detect posix timers.\n");
+    printf(_("Detect posix timers.\n"));
     for(short k = 0; k < 6; k++)     // 6 upper limit from array clocks[]
     {        
         if(clock_getres(clocks[k], &resolution) != -1)
@@ -636,13 +753,13 @@ if(w)
     }
     if(a)
     {
-        printf("Choose posix 1st clock %s\n", clocks_names[posix_best]);
-        printf("Choose posix 2nd clock CLOCK_PROCESS_CPUTIME_ID\n");
+        printf(_("Choose posix 1st clock %s\n"), clocks_names[posix_best]);
+        printf(_("Choose posix 2nd clock CLOCK_PROCESS_CPUTIME_ID\n"));
     }
     else
-        printf("Choose posix clock %s\n", clocks_names[posix_best]);
+        printf(_("Choose posix clock %s\n"), clocks_names[posix_best]);
     #else
-    printf("Posix timers not detected.\n");
+    printf(_("Posix timers not detected.\n"));
     #endif    
 // finish choose posix clock
     int devNull = 0;   
@@ -656,7 +773,7 @@ if(w)
         if(r)
             if(getrusage(RUSAGE_CHILDREN, &rus1) == -1)
             {
-                printf("Detect getrusage error: %s\n", strerror(errno));
+                printf(_("Detect getrusage error: %s\n"), strerror(errno));
                 return 8;
             } 
 
@@ -664,14 +781,14 @@ if(w)
         {
             if(clock_gettime(clocks[posix_best], &tp1) == -1)  
             {
-                printf("Detect clock_gettime error: %s\n", strerror(errno));
+                printf(_("Detect clock_gettime error: %s\n"), strerror(errno));
                 return 3;
             }
             if(a)
             {
                 if(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp4) == -1) 
                 {
-                    printf("Detect clock_gettime error: %s\n", strerror(errno));
+                    printf(_("Detect clock_gettime error: %s\n"), strerror(errno));
                     return 43;
                 }
             }
@@ -679,36 +796,37 @@ if(w)
         if(m)
             if(time(&start) == ((time_t) -1))
             {
-                printf("Detect time() error\n");
+                printf(_("Detect time() error\n"));
                 return 38;                
             }            
         if(o)
         {
             if((tim1 = clock()) == -1)
             {
-                printf("Detect clock error: %s\n", strerror(errno));
+                printf(_("Detect clock error: %s\n"), strerror(errno));
                 return 9;
             }  
+//             printf(_("tim1 %ld\n", (clock_t)tim1));
         }
         if(g)
             if (gettimeofday(&tv1, NULL) == -1)
             {
-                printf("Detect gettimeofday error: %s\n", strerror(errno));
+                printf(_("Detect gettimeofday error: %s\n"), strerror(errno));
                 return 4;
             }
         if(s)
         {
             if(!timespec_get(&ts1, TIME_UTC))
             {
-                printf("Detect timespec_get error: %s\n", strerror(errno));
-                return 41;   
+                printf(_("Detect timespec_get error: %s\n"), strerror(errno));
+                return 41;    
             }                
         }
         if(t)
         {
             if ((tim3 = times(&tms1)) == -1)
             {
-                printf("Detect times error: %s\n", strerror(errno));
+                printf(_("Detect times error: %s\n"), strerror(errno));
                 return 5;
             }
         }
@@ -724,12 +842,12 @@ if(w)
                 devNull = open("/dev/null", O_WRONLY);
                 if (devNull == -1)
                 {
-                    printf("Detect /dev/null open error: %s\n", strerror(errno));
+                    printf(_("Detect /dev/null open error: %s\n"), strerror(errno));
                     return 33;
                 }                
                 if (dup3(devNull, STDERR_FILENO, O_CLOEXEC) == -1)                
                 {
-                    printf("Detect dup error: %s\n", strerror(errno));
+                    printf(_("Detect dup error: %s\n"), strerror(errno));
                     return 34;
                 }            
             }
@@ -742,14 +860,14 @@ if(w)
             status1 = posix_spawnattr_init(&attr);
             if (status1 != 0)
             {          
-                printf("Detect posix_spawnattr_init error: %s with status %d\n", strerror(errno), status1);
+                printf(_("Detect posix_spawnattr_init error: %s with status %d\n"), strerror(errno), status1);
                 return 27; 
             }
             status1 = posix_spawnattr_setflags(&attr, POSIX_SPAWN_USEVFORK);
             if (status1 != 0) 
             { 
-                printf("Detect posix_spawnattr_setflags error: %s with status %d\n", strerror(errno), status1);
-                return 28;         
+                printf(_("Detect posix_spawnattr_setflags error: %s with status %d\n"), strerror(errno), status1);
+                return 28;            
             }
             attrp = &attr;
             
@@ -760,36 +878,38 @@ if(w)
                 status1 = posix_spawn_file_actions_init(&file_actions);
                 if (status1 != 0) 
                 { 
-                    printf("Detect posix_spawn_file_actions_init error: %s with status %d\n", strerror(errno), status1);
+                    printf(_("Detect posix_spawn_file_actions_init error: %s with status %d\n"), strerror(errno), status1);
                     return 29;         
                 }                                                                                                                                                                                                                                                                      
                 status1 = posix_spawn_file_actions_addclose(&file_actions, STDOUT_FILENO);
                 if (status1 != 0) 
                 { 
-                    printf("Detect posix_spawn_file_actions_addclose error: %s with status %d\n", strerror(errno), status1);
+                    printf(_("Detect posix_spawn_file_actions_addclose error: %s with status %d\n"), strerror(errno), status1);
                     return 30;         
                 }
                 file_actionsp = &file_actions;
             }
             // finish attributes and file actions for posix_spawn
             //	start posix_spawn process	
-            status = posix_spawn(&pid, "/bin/sh", file_actionsp, attrp, argv1, environ);
+            status = posix_spawn(&pid, argv1[0], file_actionsp, attrp, argv1, environ);
             if (status == 0) 
             { 	      
                 if (waitpid(pid, &status, 0) != -1)
+                    //             if(wait4(pid, &status, 0, &rus2) != -1)
                 {
                     if(!q)
-                        printf("Child exited with status %i on step %ld.\n", status, i);   
+                        printf(_("Child exited with status %i on step %ld.\n"), status, i);
+//                     statuses[i] = status;                    
                 } 
                 else 
                 {
-                    printf("waitpid error: %s on step %ld.\n", strerror(errno), i);
+                    printf(_("waitpid error: %s on step %ld.\n"), strerror(errno), i);
                     return 14;
                 }
             } 
             else 
             {
-                printf("posix_spawn error: %s on step %ld.\n", strerror(status), i);
+                printf(_("posix_spawn error: %s on step %ld.\n"), strerror(status), i);
                 return 15;
             }                    
             //	finish posix_spawn process  
@@ -798,7 +918,7 @@ if(w)
             {                              
                 if (close(devNull) == -1)
                 {
-                    printf("Detect close error: %s\n", strerror(errno));
+                    printf(_("Detect close error: %s\n"), strerror(errno));
                     return 35;
                 }               
             }            
@@ -808,7 +928,7 @@ if(w)
                 status1 = posix_spawnattr_destroy(attrp);
                 if (status1 != 0) 
                 { 
-                    printf("Detect posix_spawnattr_destroy error: %s with status %d\n", strerror(errno), status1);
+                    printf(_("Detect posix_spawnattr_destroy error: %s with status %d\n"), strerror(errno), status1);
                     return 31;         
                 }     
             }
@@ -818,8 +938,8 @@ if(w)
                 status1 = posix_spawn_file_actions_destroy(file_actionsp);
                 if (status1 != 0) 
                 { 
-                    printf("Detect posix_spawn_file_actions_destroy error: %s with status %d", strerror(errno), status1);
-                    return 32;         
+                    printf(_("Detect posix_spawn_file_actions_destroy error: %s with status %d"), strerror(errno), status1);
+                    return 32;          
                 } 
                 
             }
@@ -828,12 +948,12 @@ if(w)
         }   // finish force posix_spawn
         else    // use fork execve
         {
-            if((pid = vfork()) < 0)
+            if((pid = fork()) < 0)
             {
-                printf("vfork error: on step %lu.\n",  i);
+                printf(_("fork error: on step %lu.\n"),  i);
                 return 15;
             }
-            else if(pid == 0)
+            else if(pid == 0) // son
             {
                 // start redirect STDERR_FILENO, STDOUT_FILENO to /dev/null            
                 if(q)
@@ -841,43 +961,44 @@ if(w)
                     devNull = open("/dev/null", O_WRONLY);
                     if(devNull == -1)
                     {
-                        printf("Detect /dev/null open error: %s\n", strerror(errno));
+                        printf(_("Detect /dev/null open error: %s\n"), strerror(errno));
                         return 35;
                     }                
                     
                     if(dup3(devNull, STDERR_FILENO, O_CLOEXEC) == -1)                    
                     {
-                        printf("Detect dup3 error for STDERR_FILENO: %s\n", strerror(errno));
+                        printf(_("Detect dup3 error for STDERR_FILENO: %s\n"), strerror(errno));
                         return 34;
                     }
                     if(dup3(devNull, STDOUT_FILENO, O_CLOEXEC) == -1)                    
                     {
-                        printf("Detect dup3 error for STDOUT_FILENO: %s\n", strerror(errno));
+                        printf(_("Detect dup3 error for STDOUT_FILENO: %s\n"), strerror(errno));
                         return 31;
                     }                
                 }
                 // finish redirect STDERR_FILENO, STDOUT_FILENO to /dev/null
-                if(execve("/bin/sh", argv1, environ) == -1)
+                if(execve(argv1[0], argv1, environ) == -1)
                 {
-                    printf("execve error: on step %lu.\n", i);
+                    printf(_("execve error: on step %lu.\n"), i);
                     return 14;
                 }              
             }
-
+            //if(pid == wait(&status))
+            //         if(wait4(pid, &status, 0, &rus2) == -1)
             if(waitpid(pid, &status, 0) == -1)
             {
-                printf("wait error: on step %lu.\n", i);
+                printf(_("wait error: on step %lu.\n"), i);
                 return 32;            
             }
             else if(!WIFEXITED(status))
             {
-                printf("Child did not exit successfully on step %lu\n", i);
+                printf(_("Child did not exit successfully on step %lu\n"), i);
                 return 39;
             }
             else
             {            
                 if(!q)
-                    printf("Child exited with status %i on step %lu.\n", status, i);
+                    printf(_("Child exited with status %i on step %lu.\n"), status, i);
             }
         }   // finish use fork execve
         
@@ -887,28 +1008,28 @@ if(w)
         if(r)
             if(getrusage(RUSAGE_CHILDREN, &rus3) == -1)
             {
-                printf("Detect getrusage error: %s\n", strerror(errno));
+                printf(_("Detect getrusage error: %s\n"), strerror(errno));
                 return 8;
             } 
 
         if(g)
             if (gettimeofday( &tv2, NULL ) == -1)
             {
-                printf("Detect gettimeofday error: %s\n", strerror(errno));
+                printf(_("Detect gettimeofday error: %s\n"), strerror(errno));
                 return 6;
             }
         if(P)
         {
             if(clock_gettime(clocks[posix_best], &tp2) == -1) 
             {
-                printf("Detect clock_gettime error: %s\n", strerror(errno));
+                printf(_("Detect clock_gettime error: %s\n"), strerror(errno));
                 return 7;
             }
             if(a)
             {
                 if(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp5) == -1) 
                 {
-                    printf("Detect clock_gettime error: %s\n", strerror(errno));
+                    printf(_("Detect clock_gettime error: %s\n"), strerror(errno));
                     return 44;
                 }
             }
@@ -916,14 +1037,14 @@ if(w)
         if(m)
             if(time(&end) == ((time_t) -1))
             {
-                printf("Detect time() error\n");
+                printf(_("Detect time() error\n"));
                 return 37;                
             }
         if(o)
         {
             if((tim2 = clock()) == -1)
             {
-                printf("Detect clock error: %s\n", strerror(errno));
+                printf(_("Detect clock error: %s\n"), strerror(errno));
                 return 9;
             } 
         }
@@ -931,7 +1052,7 @@ if(w)
         {
             if( !timespec_get(&ts2, TIME_UTC) )
             {
-                printf("Detect timespec_get error: %s\n", strerror(errno));
+                printf(_("Detect timespec_get error: %s\n"), strerror(errno));
                 return 42;   
             }
                 
@@ -940,7 +1061,7 @@ if(w)
         {
             if ((tim4 = times(&tms2)) == -1)
             {
-                printf("Detect times error: %s\n", strerror(errno));
+                printf(_("Detect times error: %s\n"), strerror(errno));
                 return 10;
             }
         }
@@ -1305,10 +1426,10 @@ if(w)
         //	finish calculate/save diffs        
         printf(MAG "\t\r%ld" RESET, i);
         if(fflush(stdout))
-            printf("Detect fflush error %s for step %lu\n", strerror(errno), i);                        
+            printf(_("Detect fflush error %s for step %lu\n"), strerror(errno), i);                        
         if(S)
             if((slp = sleep(sleep_sec)) != 0)
-                printf("Not sleep %usec on step %lu", slp, i);
+                printf(_("Not sleep %usec on step %lu"), slp, i);
         i++;           
     } // end while(i<circles) 
 
@@ -1325,70 +1446,70 @@ if(f)
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == NULL) 
     {   
-        printf("Detect getcwd error: %s\n", strerror(errno));
+         printf(_("Detect getcwd error: %s\n"), strerror(errno));
         return 48;
     }   
     if(strlen(cwd) + strlen("/tt_results.txt") + 1 >  PATH_MAX)
     {
-        printf("strlen(cwd) is %lu. Exit.\n", strlen(cwd));
+        printf(_("strlen(cwd) is %lu. Exit.\n"), strlen(cwd));
         return 49;
     }
     strcat(cwd, "/tt_results.txt");
     fptr = fopen(cwd, "a");
     if(fptr == NULL)
     {
-        printf("Detect open file error: %s for %s\n", strerror(errno), cwd);
+        printf(_("Detect open file error: %s for %s\n"), strerror(errno), cwd);
         return 50;
     }
-    printf("Write to file %s.\n", cwd);
+    printf(_("Write to file %s.\n"), cwd);
 }
 if(!H)  //hide arrays
 {
     fprintf(fptr, "\n");
     if(P)
     {
-    fprintf(fptr, "\tclock_gettime");
+    fprintf(fptr, _("\tclock_gettime"));
     if(a)
-        fprintf(fptr,"\tclock_gettime");
+        fprintf(fptr, _("\tclock_gettime"));
     }
     if(s)
-        fprintf(fptr, "\ttimespec_get");
+        fprintf(fptr, _("\ttimespec_get"));
     if(r)
-        fprintf(fptr, "\trusage_utime\trusage_stime");
+        fprintf(fptr, _("\trusage_utime\trusage_stime"));
     if(g)
-        fprintf(fptr, "\tgettimeofday");
+        fprintf(fptr, _("\tgettimeofday"));
     if(o)
-        fprintf(fptr, "\tCPU_Time(clock)");    
+        fprintf(fptr, _("\tCPU_Time(clock)"));    //https://www.gnu.org/software/libc/manual/html_node/CPU-Time.html#CPU-Time
     if(m)
-        fprintf(fptr, "\tTime");
+        fprintf(fptr, _("\tTime"));
     if(t)
-        fprintf(fptr, "\tProcessor_Time(times)");
+        fprintf(fptr, _("\tProcessor_Time(times)"));
         
     
-    fprintf(fptr, "\n#N");
+    fprintf(fptr, _("\n#N"));
     if(P)
     {
-        fprintf(fptr, "\tsec.nsec");
+        fprintf(fptr, _("\tsec.nsec"));
         if(a)
-            fprintf(fptr, "\tsec.nsec");
+            fprintf(fptr, _("\tsec.nsec"));
     }
     if(s)
-        fprintf(fptr, "\tsec.nsec");
+        fprintf(fptr, _("\tsec.nsec"));
     if(r)
-        fprintf(fptr, "\tsec.usec\tsec.usec"); 
+        fprintf(fptr, _("\tsec.usec\tsec.usec")); 
     if(g)
-        fprintf(fptr, "\tsec.usec");
+        fprintf(fptr, _("\tsec.usec"));
     if(o)
-        fprintf(fptr, "\tsec");
+        fprintf(fptr, _("\tsec"));
     if(m)
     {
         if(o)
-            fprintf(fptr, "\t\tsec");
+            fprintf(fptr, _("\t\tsec"));
         else
-            fprintf(fptr, "\tsec");
+            fprintf(fptr, _("\tsec"));
     }
     if(t)
-        fprintf(fptr, "\treal\tuser\tsystem\tcuser\tcsystem"); 
+        fprintf(fptr, _("\treal\tuser\tsystem\tcuser\tcsystem")); 
     fprintf(fptr,"\n\n");
     
     for(int j = 0; j<circles; j++)
@@ -1477,52 +1598,55 @@ if(!H)  //hide arrays
  fprintf(fptr, "\n");
  if(P)
  {
-     fprintf(fptr, "\n\tclock_gettime");
+     fprintf(fptr, _("\n\tclock_gettime"));
      if(a)
-         fprintf(fptr, "\tclock_gettime");
+         fprintf(fptr, _("\tclock_gettime"));
  }
  if(s)
-     fprintf(fptr, "\ttimespec_get");
+     fprintf(fptr, _("\ttimespec_get"));
  if(r)
-     fprintf(fptr, "\trusage_utime\trusage_stime");
+     fprintf(fptr, _("\trusage_utime\trusage_stime"));
  if(g)
-     fprintf(fptr, "\tgettimeofday");
+     fprintf(fptr, _("\tgettimeofday"));
  if(o)
-     fprintf(fptr, "\tCPU_Time(clock)");    
+     fprintf(fptr, _("\tCPU_Time(clock)"));    //https://www.gnu.org/software/libc/manual/html_node/CPU-Time.html#CPU-Time
  if(m)
-     fprintf(fptr, "\tTime");
+     fprintf(fptr, _("\tTime"));
  if(t)
-     fprintf(fptr, "\tProcessor_Time(times)");
+     fprintf(fptr, _("\tProcessor_Time(times)"));
  
+//  fprintf(fptr, _("\n\tC_MONOTONIC"));
+//  if(a)
+//      fprintf(fptr, _("\tC_PR_CPUTIME_ID"));
  
  fprintf(fptr, "\n");
  if(P)
  {
-     fprintf(fptr, "\tsec.nsec"); 
+     fprintf(fptr, _("\tsec.nsec")); 
      if(a)
-         fprintf(fptr, "\tsec.nsec");
+         fprintf(fptr, _("\tsec.nsec"));
  }
  if(s)
-     fprintf(fptr, "\tsec.nsec");
+     fprintf(fptr, _("\tsec.nsec"));
  if(r)
-     fprintf(fptr, "\tsec.usec\tsec.usec"); 
+     fprintf(fptr, _("\tsec.usec\tsec.usec")); 
  if(g)
-     fprintf(fptr, "\tsec.usec");
+     fprintf(fptr, _("\tsec.usec"));
  if(o)
-     fprintf(fptr, "\tsec");
+     fprintf(fptr, _("\tsec"));
  if(m)
  {
      if(o)
-         fprintf(fptr, "\t\tsec");
+         fprintf(fptr, _("\t\tsec"));
      else
-         fprintf(fptr, "\tsec");
+         fprintf(fptr, _("\tsec"));
  }
  if(t)
-     fprintf(fptr, "\treal\tuser\tsystem\tcuser\tcsystem"); 
+     fprintf(fptr, _("\treal\tuser\tsystem\tcuser\tcsystem"));  
  fprintf(fptr,"\n\n");
  
      // start Max-Min
- fprintf(fptr,"Max.");
+ fprintf(fptr,_("Max."));
  if(P)
  {
      fprintf(fptr, "\t%f", Mclock_gettime_times);
@@ -1552,7 +1676,7 @@ if(!H)  //hide arrays
   }     
   
   fprintf(fptr,"\n");
-  fprintf(fptr,"Min.");
+  fprintf(fptr, _("Min."));
   if(P)
   {
       fprintf(fptr, "\t%f", mclock_gettime_times);
@@ -1583,7 +1707,7 @@ if(!H)  //hide arrays
   // finish Max-Min
   fprintf(fptr,"\n");
   // start averages
-  fprintf(fptr,"Exp.");
+  fprintf(fptr, _("Exp."));
   if(P)
   {
       fprintf(fptr, "\t%f", Aclock_gettime_times);
@@ -1614,7 +1738,7 @@ if(!H)  //hide arrays
  // finish averages
  // start variance
  fprintf(fptr,"\n");
- fprintf(fptr,"Var.");
+ fprintf(fptr, _("Var."));
  if(P)
  {
      fprintf(fptr, "\t%f", circles ==1 ? Vclock_gettime_times : Vclock_gettime_times/(circles - 1));
@@ -1680,7 +1804,7 @@ if(!H)  //hide arrays
  
  // start std.dev
  fprintf(fptr,"\n");
- fprintf(fptr,"Std.D");
+ fprintf(fptr, _("Std.D"));
  if(P)
  {
      fprintf(fptr, "\t%f", circles ==1 ? square_root(Vclock_gettime_times, 0.000000000001) : square_root(Vclock_gettime_times/(circles - 1), 0.000000000001));
@@ -1764,18 +1888,18 @@ if(segv_stack.ss_sp != NULL)
     free(segv_stack.ss_sp);
 if (gettimeofday( &t02, NULL ) == -1)
 {
-    printf("Detect gettimeofday error: %s", strerror(errno));
+    printf(_("Detect gettimeofday error: %s"), strerror(errno));
     return 19;
 }
 if(!(tm2 = localtime ( &t02.tv_sec )))
 {
-    printf("Detect localtime error: %s", strerror(errno));
+    printf(_("Detect localtime error: %s"), strerror(errno));
     return 20;
 }
 tv3 = timeval_diff(t01, t02);
-printf("\nFinish working %d:%02d:%02d:%ld.\nElapsed %.0f:%06li seconds and %lu cycles", tm2->tm_hour, tm2->tm_min, tm2->tm_sec, t02.tv_usec, (double)tv3.tv_sec, tv3.tv_usec, circles);
+printf(_("\nFinish working %d:%02d:%02d:%ld.\nElapsed %.0f:%06li seconds and %lu cycles"), tm2->tm_hour, tm2->tm_min, tm2->tm_sec, t02.tv_usec, (double)tv3.tv_sec, tv3.tv_usec, circles);
 if(S)
-    printf(", Sleeping time %lu sec.\n\n", sleep_sec*circles);
+    printf(_(", Sleeping time %lu sec.\n\n"), sleep_sec*circles);
 else
     printf(".\n\n");
 
