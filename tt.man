@@ -83,7 +83,7 @@ for
 .B application. 
 It is possible to specify command line options also for the 
 .B application 
-using OPTS_DELIMITER parameter. By default it is '@', but can be changed to any other desirable symbol during configuration.
+using OPTS_DELIM variable during configuration. By default it is '@', but can be changed to any other desirable symbol. For example: ./configure OPTS_DELIM="\\&". Also can be used OPTS_DELIM='\\&'  or  OPTS_DELIM=\\'\\&\\' forms. See examples.
 .TP
 \fB-c \fIamount\fR
 run 
@@ -107,6 +107,7 @@ It is possible to save intermediate results either in the
 stack or in the heap. By default 
 .B tt
 use stack. For heap, before compiling, it should be configured with option --enable-MEMORY.
+Source is prepared for translation using gettext. For translation .mo files can be chosen directory by using variable LDIR during configuration. For example: ./configure LDIR=/home/user/tt/po/ , if not defined "/usr/share/locale" will be used.
 .SH AUTHOR/REPORTING BUGS
 zkutch@yahoo.com
 .SH COPYRIGHT
@@ -125,7 +126,10 @@ find in current directory 30 times, hide standard output for it, use second cloc
 .br
 runs
 .B application
-ls in current directory 100 times with options "-l -h", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 2 seconds between each run.
+ls in current directory 100 times with options "-l -h", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 2 seconds between each run. As mentioned,  it can be used other symbol in place of '@'. If, for example, '&' is chosen, then it should be used with escape symbol:
+\fC\fR
+.SS tt  -b /bin/ls \\&-l -h\\& -c 100 -q -a -S 2 -m -t -g -r -s -o
+\FP
 .SH "SEE ALSO"
 time(1)
 .SH BUGS

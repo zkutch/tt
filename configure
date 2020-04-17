@@ -624,6 +624,10 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+opt_delim
+OPTS_DELIM
+i18ndir
+LDIR
 mem
 LIBOBJS
 EGREP
@@ -727,7 +731,9 @@ CFLAGS
 LDFLAGS
 LIBS
 CPPFLAGS
-CPP'
+CPP
+LDIR
+OPTS_DELIM'
 
 
 # Initialize some variables set by options.
@@ -1370,6 +1376,8 @@ Some influential environment variables:
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
+  LDIR        Directory for i18n
+  OPTS_DELIM  Delimiter for child application options
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -4606,7 +4614,33 @@ if test "${enable_MEMORY+set}" = set; then :
 fi
 
 
-#AC_ARG_ENABLE([LOCALEDIR], AS_HELP_STRING([--enable-LOCALEDIR], [Directory for i18n]), AC_SUBST([localedir], ["-DLOCALEDIR=\"/usr/share/locale\""]))
+
+# using example: ./configure LDIR=/home/mako/work/po/ , if not defined "/usr/share/locale" will be used
+
+if [ "$LDIR" != "" ]
+then
+i18ndir="-DLOCALEDIR=$LDIR"
+
+else
+i18ndir=""
+
+fi
+
+# using example: OPTS_DELIM="\&" or OPTS_DELIM='\&'  or  OPTS_DELIM=\'\&\' if not defined '@' will be used
+
+if [ "$OPTS_DELIM" != "" ]
+then
+opt_delim="-DOPTS_DELIMITER=$OPTS_DELIM"
+
+else
+opt_delim=""
+
+fi
+
+#AM_CONDITIONAL([CONDITIONALDIR], [test LDIR != ""])
+#AM_COND_IF([CONDITIONALDIR], [AC_SUBST([i18ndir], ["-DLOCALEDIR=$LDIR"])], [AC_SUBST([i18ndir], [""])])
+#AC_ARG_ENABLE([i18ndir], AS_HELP_STRING([--enable-i18ndir[=$LDIR]], [Directory for i18n]), AC_SUBST([i18ndir], ["-DLOCALEDIR=$LDIR"]))
+
 
 
 

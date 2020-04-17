@@ -83,7 +83,7 @@ OPTIONS
                                                                                                               
 @option{-b} path                                                                                               
         absolute path for @strong{application}. 
-        It is possible to specify command line options also for the @strong{application} using OPTS_DELIMITER parameter. By default it is '@@', but can be changed to any other desirable symbol during configuration.
+        It is possible to specify command line options also for the @strong{application} using OPTS_DELIMITER parameter. By default it is '@@', but can be changed to any other desirable symbol during configuration.  For example: ./configure OPTS_DELIM="\&". Also can be used OPTS_DELIM='\&' or OPTS_DELIM=\'\&\' forms. See examples.
                                                                                                               
 @option{-c} amount                                                                                             
         run @strong{application} amount times.                                                                 
@@ -102,7 +102,7 @@ OPTIONS
 
 OTHER
 
-@noindent It is possible to save intermediate results either in the tt stack or in the heap. By default tt use stack. For heap, before compiling, it should be configured with option --enable-MEMORY.
+@noindent It is possible to save intermediate results either in the tt stack or in the heap. By default tt use stack. For heap, before compiling, it should be configured with option --enable-MEMORY. Source is prepared for translation using gettext. For translation .mo files can be chosen directory by using variable LDIR during configuration. For example: ./configure LDIR=/home/user/tt/po/ , if not defined "/usr/share/locale" will be used.
 
 @node Examples
 
@@ -114,7 +114,9 @@ tt -b /usr/bin/find -c 30 -q -a -S 1 -m -t -g -r -s -o
 
 tt  -b /bin/ls @@-l -h@@ -c 100 -q -a -S 2 -m -t -g -r -s -o
 
-@noindent runs @strong{application} ls in current directory 100 times with options "-l -h", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 2 seconds between each run.
+@noindent runs @strong{application} ls in current directory 100 times with options "-l -h", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 2 seconds between each run. As mentioned, it can be used other symbol in place of '@@'. If, for example, '&' is chosen, then it should be used with escape symbol:
+
+tt -b /bin/ls \&-l -h\& -c 100 -q -a -S 2 -m -t -g -r -s -o
 
 @node Copyright
 

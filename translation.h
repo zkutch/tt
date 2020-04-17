@@ -4,7 +4,11 @@
 #define _(STRING) gettext(STRING)
 #define PACKAGE "tt"
 
-#ifndef LOCALEDIR   // translation
+#define make_str(a) # a
+#define STR(a) make_str(a)
+
+
+#ifndef LOCALEDIR  // translation
 #define LOCALEDIR "/usr/share/locale"
 #endif
 

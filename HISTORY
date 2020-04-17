@@ -2,6 +2,13 @@
   tt history
 ============================================================================
 
+  (2020-4)
+  Added possibility to choose directory for translation .mo  files 
+  by using variable LDIR during configuration.
+  Delimiter for running application options can be chosen during configuration
+  using variable OPTS_DELIM.
+
+
 
   Version 2.1 (2020-3)
   Added command line options for testing applications.

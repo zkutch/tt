@@ -1,4 +1,20 @@
-// Copyright (C) 2016-2020 zkutch@yahoo.com 
+/* tt    - testing tool. Runs chosen application multiple times.
+   Copyright (C) 2019, 2020 Zurab Z.Kutchava
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+
+/* Written by Zurab Z.Kutchava.  */ 
  
 
 #ifndef _GNU_SOURCE
@@ -10,8 +26,10 @@
 #endif
 
 #ifndef OPTS_DELIMITER   // delimiter for executable application options
-#define OPTS_DELIMITER '@'
+#define OPTS_DELIMITER @
 #endif
+
+#define ONEQ(x) (make_str(x)[0])
 
 #ifndef EXECUTABLE_OPT_MAX_SIZE
 #define EXECUTABLE_OPT_MAX_SIZE 1000
@@ -48,6 +66,7 @@ extern char **environ;
 
 int main(int argc, char **argv) 
 {
+    
     // catch Ctr-C
     if(signal(SIGINT, signal_handler) == SIG_ERR)
     {
@@ -236,7 +255,7 @@ int main(int argc, char **argv)
                     char ** quota = argv;
                     if(*++quota != 0x0)
                     {
-                    if(**(quota) == OPTS_DELIMITER)
+                    if(**(quota) == ONEQ(OPTS_DELIMITER))
                     {
                         short maxlen = 0;
                         found_delimiter = 1;                        
@@ -257,7 +276,7 @@ int main(int argc, char **argv)
                             
                             maxlen = strlen(*quota);
                             
-                            if(quota[0][strlen(*quota)-1] == OPTS_DELIMITER)
+                            if(quota[0][strlen(*quota)-1] == ONEQ(OPTS_DELIMITER))
                             {                                
                                 found_delimiter = 2;
                                 quota[0][strlen(*quota)-1] = '\0'; // eliminate finishing OPTS_DELIMITER in last option
@@ -275,7 +294,7 @@ int main(int argc, char **argv)
                             ++argv;
                             if(*argv == 0x0)
                                 break;
-                            if(quota[0][strlen(*quota)-1] == OPTS_DELIMITER)
+                            if(quota[0][strlen(*quota)-1] == ONEQ(OPTS_DELIMITER))
                             {                                
                                 quota[0][strlen(*quota)-1] = '\0'; // eliminate finishing OPTS_DELIMITER in last option
                                 if(strlen(*quota) > 1)
@@ -524,7 +543,14 @@ EXE:                if(found_delimiter == 1)
         }
     }
     
+    
 // finish command line options 
+ 
+ if(!q && strcmp(STR(LOCALEDIR), "/usr/share/locale") != 0)    // 
+    printf("LOCALEDIR is:%s\n", STR(LOCALEDIR));
+ if(!q && ONEQ(OPTS_DELIMITER) != '@')    // 
+    printf("OPTS_DELIMITER is:%s\n", STR(OPTS_DELIMITER));
+ 
  
  struct timeval tv1, tv2, tv3, tv4, tv5; 
  clock_t tim1,tim2;

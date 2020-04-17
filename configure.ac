@@ -33,7 +33,29 @@ AC_CHECK_FUNCS([clock_gettime getcwd gettimeofday strerror times clock timespec_
 #   https://autotools.io/autoconf/arguments.html
 AC_ARG_ENABLE([MEMORY], AS_HELP_STRING([--enable-MEMORY], [Puts arrays to heap]), AC_SUBST([mem], ["-DMEMORY=1"])) 
 
-#AC_ARG_ENABLE([LOCALEDIR], AS_HELP_STRING([--enable-LOCALEDIR], [Directory for i18n]), AC_SUBST([localedir], ["-DLOCALEDIR=\"/usr/share/locale\""])) 
+
+# using example: ./configure LDIR=/home/mako/work/po/ , if not defined "/usr/share/locale" will be used
+AC_ARG_VAR(LDIR, Directory for i18n)
+if [[ "$LDIR" != "" ]]
+then 
+AC_SUBST([i18ndir], ["-DLOCALEDIR=$LDIR"])
+else 
+AC_SUBST([i18ndir], [""])
+fi
+
+# using example: OPTS_DELIM="\&" or OPTS_DELIM='\&'  or  OPTS_DELIM=\'\&\' if not defined '@' will be used
+AC_ARG_VAR(OPTS_DELIM, Delimiter for child application options, default '@')
+if [[ "$OPTS_DELIM" != "" ]]
+then 
+AC_SUBST([opt_delim], ["-DOPTS_DELIMITER=$OPTS_DELIM"])
+else 
+AC_SUBST([opt_delim], [""])
+fi
+
+#AM_CONDITIONAL([CONDITIONALDIR], [test LDIR != ""])
+#AM_COND_IF([CONDITIONALDIR], [AC_SUBST([i18ndir], ["-DLOCALEDIR=$LDIR"])], [AC_SUBST([i18ndir], [""])])
+#AC_ARG_ENABLE([i18ndir], AS_HELP_STRING([--enable-i18ndir[=$LDIR]], [Directory for i18n]), AC_SUBST([i18ndir], ["-DLOCALEDIR=$LDIR"])) 
+
 
 
 

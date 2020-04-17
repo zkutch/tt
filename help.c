@@ -1,3 +1,22 @@
+/* print help for tt   
+   Copyright (C) 2019, 2020 Zurab Z.Kutchava
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+
+/* Written by Zurab Z.Kutchava.  */
+
+
 
 #include <sys/ioctl.h>
 #include "tt.h"
@@ -57,7 +76,7 @@ void help(void)
     string_2_column(width,bold "-b " reset underline "path"reset "\n");
     string_2_column(width,"\tabsolute " underline "path" reset " for " bold "application.\n" reset);
     string_2_column(width, "It is possible to specify command line options also for the "
-        bold "application" reset " using OPTS_DELIMITER parameter. By default it is ’@’, but can be changed to any other desirable symbol during configuration.\n");
+        bold "application" reset " using OPTS_DELIM variable during configuration. By default it is '@', but can be changed to any other desirable symbol. For example: ./configure OPTS_DELIM=\"&\". Also can be used OPTS_DELIM='\\&' or OPTS_DELIM=\\'\\&\\' forms. See examples.\n");
     string_2_column(width,bold "-c " reset underline "amount"reset);
     string_2_column(width,"\trun " bold "application " reset underline "amount"reset " times.\n");
     string_2_column(width,bold "-R" reset "\tshow resolution for some clocks.\n");
@@ -66,7 +85,7 @@ void help(void)
     string_2_column(width,bold "-h" reset "\thelp.\n");
     
     printf(bold "OTHER\n" reset);
-    string_2_column(width, "It is possible to save intermediate results either in the " bold "tt" reset " stack or in the heap. By default "  bold "tt" reset " use stack. For heap, before compiling, it should be configured with option --enable-MEMORY.\n");
+    string_2_column(width, "It is possible to save intermediate results either in the " bold "tt" reset " stack or in the heap. By default "  bold "tt" reset " use stack. For heap, before compiling, it should be configured with option --enable-MEMORY. Source is prepared for translation using gettext. For translation .mo files can be chosen directory by using variable LDIR during configuration. For example: ./configure LDIR=/home/user/tt/po/ , if not defined \"/usr/share/locale\" will be used.\n");
     
     printf(bold "\nAUTHOR/REPORTING BUGS\n" reset);
     printf("\tzkutch@yahoo.com\n\n");
@@ -79,7 +98,8 @@ void help(void)
     string_2_column(width, "runs " bold "application" reset " find  in  current directory 30 times, hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time. Sleep 1 second between each run.\n");
     
     string_2_column(width,bold "tt -b /bin/ls @-l -h@ -c 100 -q -a -S 2 -m -t -g -r -s -o\n" reset);
-    string_2_column(width, "runs " bold "application" reset " ls in current directory 100 times with options \"-l -h\", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time.  Sleep 2 seconds between each run.");
+    string_2_column(width, "runs " bold "application" reset " ls in current directory 100 times with options \"-l -h\", hide standard output for it, use second clock_gettime, time, times, gettimeofday, getrusage, timespec_get and clock functions for measuring time.  Sleep 2 seconds between each run.As mentioned, it can be used other symbol in place of '@'. If, for example, '&' is chosen, then it should be used with escape symbol:\n");
+    string_2_column(width,bold "tt -b /bin/ls \\&-l -h\\& -c 100 -q -a -S 2 -m -t -g -r -s -o\n" reset);
     
     printf(bold "\nSEE ALSO\n" reset);
     printf("\ttime(1)\n"); 
